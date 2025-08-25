@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  folders Folder[]
+  securityLogs SecurityLog[]
+
+  @@map("users")
+}
+
+model Folder {
+  id           String    @id @default(cuid())
+  name         String
+  isProtected  Boolean   @default(false)
+  passwordHash String?
+  salt         String?
+  ownerId      String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  owner  User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  files  File[]
+  accessTokens FolderAccessToken[]
+
+  @@map("folders")
+}
+
+model File {
+  id              String   @id @default(cuid())
+  originalName    String
+  mimeType        String
+  size            Int
+  storagePath     String   // Path to encrypted file in storage
+  coverPath       String   // Path to cover image or Unsplash URL
+  encryptedKeyBlob String? // Base64 encoded encrypted file key (null for normal uploads)
+  salt            String?  // Base64 encoded salt for key derivation (null for normal uploads)
+  uploadMode      String   @default("secure") // "secure" or "normal"
+  folderId        String
+  ownerId         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@map("files")
+}
+
+model FolderAccessToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  folderId  String
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@map("folder_access_tokens")
+}
+
+model SecurityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // "login_attempt", "folder_unlock_attempt", "file_unlock_attempt", etc.
+  success   Boolean
+  ipAddress String?
+  userAgent String?
+  metadata  String?  // Additional context as JSON string for SQLite
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("security_logs")
+}

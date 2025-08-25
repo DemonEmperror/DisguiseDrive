@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: disguisedrive-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SUPABASE_URL
+        value: https://pkllfcbrrrvtteawvedg.supabase.co
+      - key: SUPABASE_SERVICE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbGxmY2JycnJ2dHRlYXd2ZWRnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjEwNTcyNCwiZXhwIjoyMDcxNjgxNzI0fQ.UERyd6tUBur_x2e2dolbi-7HxHvGYCDXaeHAAdradQ0
+      - key: SUPABASE_BUCKET_NAME
+        value: disguisedrive-files
+      - key: UNSPLASH_ACCESS_KEY
+        value: Twy3n21LMwwSl536iRo45ZZfcs1eqrCE3KbcM29RAx8
