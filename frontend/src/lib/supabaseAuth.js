@@ -18,6 +18,7 @@ export const SupabaseAuthProvider = ({ children }) => {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
@@ -25,6 +26,7 @@ export const SupabaseAuthProvider = ({ children }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', event, session);
         setUser(session?.user ?? null);
         setLoading(false);
       }

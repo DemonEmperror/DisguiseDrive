@@ -49,13 +49,20 @@ export default function Folders() {
   const [showNewFolderPassword, setShowNewFolderPassword] = useState(false);
 
   useEffect(() => {
-    console.log('Auth state:', { loading, isAuthenticated, user });
-    // Only redirect if we're sure the user is not authenticated (loading is false)
-    if (!loading && !isAuthenticated && !user) {
-      console.log('Redirecting to home - not authenticated');
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100); // Small delay to prevent race conditions
+    console.log('Folders page auth state:', { loading, isAuthenticated, user: !!user });
+    // Wait longer before redirecting and be more specific about conditions
+    if (!loading) {
+      if (!isAuthenticated || !user) {
+        console.log('User not authenticated, redirecting in 2 seconds...');
+        const timer = setTimeout(() => {
+          console.log('Executing redirect to home');
+          window.location.href = '/';
+        }, 2000); // Longer delay
+        
+        return () => clearTimeout(timer);
+      } else {
+        console.log('User is authenticated, staying on folders page');
+      }
     }
   }, [isAuthenticated, loading, user]);
 
