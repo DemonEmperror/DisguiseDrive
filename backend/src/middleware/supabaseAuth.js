@@ -2,6 +2,14 @@ const { createClient } = require('@supabase/supabase-js');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
+// Check for required environment variables
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+  console.error('Missing Supabase environment variables:', {
+    SUPABASE_URL: !!process.env.SUPABASE_URL,
+    SUPABASE_SERVICE_KEY: !!process.env.SUPABASE_SERVICE_KEY
+  });
+}
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
