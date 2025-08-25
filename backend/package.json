@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "build": "echo 'No build step required'",
+    "build": "npx prisma generate",
+    "postinstall": "npx prisma generate",
     "test": "echo \"Error: no test specified\" && exit 1",
     "seed": "node src/scripts/seed.js",
     "db:migrate": "npx prisma migrate dev",

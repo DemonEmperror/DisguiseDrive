@@ -1,51 +1,51 @@
 const { createClient } = require('@supabase/supabase-js');
 const { PrismaClient } = require('@prisma/client');
+const { fallbackAuth } = require('./fallbackAuth');
 
 const prisma = new PrismaClient();
+
 // Check for required environment variables
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-  console.error('Missing Supabase environment variables:', {
-    SUPABASE_URL: !!process.env.SUPABASE_URL,
-    SUPABASE_SERVICE_KEY: !!process.env.SUPABASE_SERVICE_KEY
-  });
+const hasSupabaseConfig = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY;
+
+if (!hasSupabaseConfig) {
+  console.warn('⚠️ Supabase environment variables missing - using fallback auth');
 }
 
-const supabase = createClient(
+const supabase = hasSupabaseConfig ? createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
-);
+) : null;
 
 /**
  * Middleware to authenticate Supabase JWT tokens
  */
 const authenticateSupabaseToken = async (req, res, next) => {
   try {
+    // If Supabase is not configured, use fallback auth
+    if (!hasSupabaseConfig) {
+      console.log('🔄 Supabase not configured, using fallback auth');
+      return fallbackAuth(req, res, next);
+    }
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
     if (!token) {
-      return res.status(401).json({ error: 'Access token required' });
-    }
-
-    // Check if Supabase is configured
-    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-      console.error('Supabase not configured, cannot authenticate');
-      return res.status(500).json({ 
-        error: 'Server configuration error - Supabase credentials missing',
-        details: 'Please configure SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables'
-      });
+      console.log('❌ No auth token provided, using fallback auth');
+      return fallbackAuth(req, res, next);
     }
 
     // Verify token with Supabase
-    console.log('Verifying Supabase token...');
+    console.log('🔍 Verifying Supabase token...');
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      console.error('Supabase auth error:', error);
-      return res.status(401).json({ error: 'Invalid token' });
+      console.error('❌ Supabase auth error:', error?.message || 'No user returned');
+      console.log('🔄 Falling back to fallback auth');
+      return fallbackAuth(req, res, next);
     }
     
-    console.log('Supabase user verified:', user.email);
+    console.log('✅ Supabase user verified:', user.email);
 
     // Create or find user in our database
     let dbUser = await prisma.user.findUnique({
@@ -54,12 +54,12 @@ const authenticateSupabaseToken = async (req, res, next) => {
     });
 
     if (!dbUser) {
-      // Create user if doesn't exist
+      console.log('👤 Creating new user in database:', user.email);
       dbUser = await prisma.user.create({
         data: {
           email: user.email,
           username: user.user_metadata?.username || user.email.split('@')[0],
-          // No password needed for Supabase users
+          password: null
         },
         select: { id: true, email: true, username: true }
       });
@@ -67,13 +67,12 @@ const authenticateSupabaseToken = async (req, res, next) => {
 
     req.user = dbUser;
     req.supabaseUser = user;
+    console.log('✅ Authentication successful for user:', dbUser.email);
     next();
   } catch (error) {
-    console.error('Supabase auth middleware error:', error);
-    return res.status(500).json({ 
-      error: 'Authentication failed',
-      details: error.message 
-    });
+    console.error('❌ Supabase auth middleware error:', error);
+    console.log('🔄 Falling back to fallback auth due to error');
+    return fallbackAuth(req, res, next);
   }
 };
 

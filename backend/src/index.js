@@ -7,8 +7,11 @@ const { PrismaClient } = require('@prisma/client');
 const authRoutes = require('./routes/auth');
 const folderRoutes = require('./routes/folders');
 const fileRoutes = require('./routes/files');
+require('dotenv').config();
+
 const { errorHandler } = require('./middleware/errorHandler');
 const SupabaseStorageService = require('./services/supabaseStorage');
+const { initializeDatabase } = require('./scripts/init-db');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -85,6 +88,9 @@ const supabaseStorage = new SupabaseStorageService();
 
 async function startServer() {
   try {
+    // Initialize database first
+    await initializeDatabase();
+    
     // Initialize Supabase storage
     await supabaseStorage.initialize();
     
