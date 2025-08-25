@@ -3,7 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { PrismaClient } = require('@prisma/client');
-const fetch = require('node-fetch'); // For keep-alive requests
+// Using built-in fetch API (Node.js 18+)
 const authRoutes = require('./routes/auth');
 const folderRoutes = require('./routes/folders');
 const fileRoutes = require('./routes/files');
