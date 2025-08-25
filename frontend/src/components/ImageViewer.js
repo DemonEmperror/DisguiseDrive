@@ -21,7 +21,9 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
 
   // Bottom tap detection for unlock (only for secure files)
   const bottomTapHandlers = useBottomTap(() => {
+    console.log('Bottom tap detected!', { uploadMode: file?.uploadMode, isUnlocked });
     if (file?.uploadMode === 'secure' && !isUnlocked) {
+      console.log('Showing password prompt');
       setShowPasswordPrompt(true);
     }
   });
@@ -197,8 +199,9 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
                 <div className="absolute inset-0 rounded-lg flex flex-col">
                   <div className="flex-1"></div>
                   <div 
-                    className="h-16 cursor-pointer"
+                    className="h-16 cursor-pointer bg-transparent hover:bg-black hover:bg-opacity-10 transition-colors duration-200"
                     {...bottomTapHandlers}
+                    title="Tap here to unlock"
                   >
                   </div>
                 </div>
@@ -208,6 +211,11 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
                 <p className="text-sm text-gray-600">
                   Nature photography collection.
                 </p>
+                {file?.uploadMode === 'secure' && (
+                  <p className="text-xs text-blue-600 animate-pulse">
+                    💡 Tap the bottom of the image to unlock
+                  </p>
+                )}
               </div>
             </div>
           ) : (
