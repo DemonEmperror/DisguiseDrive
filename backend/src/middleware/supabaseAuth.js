@@ -27,6 +27,15 @@ const authenticateSupabaseToken = async (req, res, next) => {
       return res.status(401).json({ error: 'Access token required' });
     }
 
+    // Check if Supabase is configured
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+      console.error('Supabase not configured, cannot authenticate');
+      return res.status(500).json({ 
+        error: 'Server configuration error - Supabase credentials missing',
+        details: 'Please configure SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables'
+      });
+    }
+
     // Verify token with Supabase
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
@@ -58,7 +67,10 @@ const authenticateSupabaseToken = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Supabase auth middleware error:', error);
-    return res.status(500).json({ error: 'Authentication failed' });
+    return res.status(500).json({ 
+      error: 'Authentication failed',
+      details: error.message 
+    });
   }
 };
 
