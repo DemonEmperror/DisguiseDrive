@@ -195,17 +195,18 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
                   alt="Cover"
                   className="max-w-full max-h-96 rounded-lg shadow-lg prevent-context-menu no-select"
                 />
-                {/* Bottom unlock area - more visible for debugging */}
-                <div className="absolute inset-0 rounded-lg flex flex-col pointer-events-none">
-                  <div className="flex-1"></div>
-                  <div 
-                    className="h-16 cursor-pointer bg-red-500 bg-opacity-20 hover:bg-red-500 hover:bg-opacity-40 transition-colors duration-200 pointer-events-auto flex items-center justify-center"
-                    {...bottomTapHandlers}
-                    title="Tap here to unlock"
-                  >
-                    <span className="text-white text-xs font-bold">TAP TO UNLOCK</span>
+                {/* View button overlay for secure images */}
+                {file?.uploadMode === 'secure' && (
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                    <button
+                      onClick={() => setShowPasswordPrompt(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg transition-colors duration-200 flex items-center space-x-2"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                      <span>View</span>
+                    </button>
                   </div>
-                </div>
+                )}
               </div>
               
               <div className="mt-4 space-y-2">
@@ -213,8 +214,8 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
                   Nature photography collection.
                 </p>
                 {file?.uploadMode === 'secure' && (
-                  <p className="text-xs text-blue-600 animate-pulse">
-                    💡 Tap the bottom of the image to unlock
+                  <p className="text-xs text-gray-500">
+                    🔒 Click "View" to unlock this secure image
                   </p>
                 )}
               </div>
