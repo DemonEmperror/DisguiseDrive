@@ -7,6 +7,7 @@ import { useCallback } from 'react';
  */
 export const useBottomTap = (onUnlock) => {
   const handleBottomTap = useCallback((e) => {
+    console.log('useBottomTap: Event triggered', e.type);
     e.preventDefault();
     e.stopPropagation();
     onUnlock();
@@ -20,6 +21,7 @@ export const useBottomTap = (onUnlock) => {
   return {
     onTouchStart: handleBottomTap,
     onClick: handleBottomTap,
+    onMouseDown: handleBottomTap,
     onContextMenu: handleContextMenu,
   };
 };

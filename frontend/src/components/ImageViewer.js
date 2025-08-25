@@ -195,14 +195,15 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
                   alt="Cover"
                   className="max-w-full max-h-96 rounded-lg shadow-lg prevent-context-menu no-select"
                 />
-                {/* Invisible bottom unlock area */}
-                <div className="absolute inset-0 rounded-lg flex flex-col">
+                {/* Bottom unlock area - more visible for debugging */}
+                <div className="absolute inset-0 rounded-lg flex flex-col pointer-events-none">
                   <div className="flex-1"></div>
                   <div 
-                    className="h-16 cursor-pointer bg-transparent hover:bg-black hover:bg-opacity-10 transition-colors duration-200"
+                    className="h-16 cursor-pointer bg-red-500 bg-opacity-20 hover:bg-red-500 hover:bg-opacity-40 transition-colors duration-200 pointer-events-auto flex items-center justify-center"
                     {...bottomTapHandlers}
                     title="Tap here to unlock"
                   >
+                    <span className="text-white text-xs font-bold">TAP TO UNLOCK</span>
                   </div>
                 </div>
               </div>
