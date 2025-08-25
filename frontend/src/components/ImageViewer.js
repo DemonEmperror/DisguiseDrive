@@ -201,19 +201,19 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
                   alt="Cover"
                   className="max-w-full max-h-96 rounded-lg shadow-lg prevent-context-menu no-select"
                 />
-                {/* View button overlay - always show for locked images */}
+                {/* Hidden unlock area - invisible but functional */}
                 {!isUnlocked && (
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                    <button
+                  <div className="absolute inset-0 rounded-lg flex flex-col">
+                    <div className="flex-1"></div>
+                    <div 
+                      className="h-16 cursor-pointer bg-transparent"
                       onClick={() => {
-                        console.log('View button clicked, file:', file);
+                        console.log('Hidden unlock area clicked, file:', file);
                         setShowPasswordPrompt(true);
                       }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg transition-colors duration-200 flex items-center space-x-2"
+                      title="Tap to unlock"
                     >
-                      <EyeIcon className="h-4 w-4" />
-                      <span>View</span>
-                    </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -224,7 +224,7 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
                 </p>
                 {!isUnlocked && (
                   <p className="text-xs text-gray-500">
-                    🔒 Click "View" to unlock this image
+                    Nature photography collection.
                   </p>
                 )}
               </div>
