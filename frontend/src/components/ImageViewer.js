@@ -32,9 +32,15 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
   useEffect(() => {
     if (!isOpen || !file) {
       resetState();
-    } else if (file?.uploadMode === 'normal') {
-      // For normal files, load the image directly
-      loadNormalImage();
+    } else {
+      console.log('ImageViewer opened with file:', { 
+        uploadMode: file?.uploadMode, 
+        originalName: file?.originalName 
+      });
+      if (file?.uploadMode === 'normal') {
+        // For normal files, load the image directly
+        loadNormalImage();
+      }
     }
   }, [isOpen, file]);
 
@@ -195,11 +201,14 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
                   alt="Cover"
                   className="max-w-full max-h-96 rounded-lg shadow-lg prevent-context-menu no-select"
                 />
-                {/* View button overlay for secure images */}
-                {file?.uploadMode === 'secure' && (
+                {/* View button overlay - always show for locked images */}
+                {!isUnlocked && (
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
                     <button
-                      onClick={() => setShowPasswordPrompt(true)}
+                      onClick={() => {
+                        console.log('View button clicked, file:', file);
+                        setShowPasswordPrompt(true);
+                      }}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg transition-colors duration-200 flex items-center space-x-2"
                     >
                       <EyeIcon className="h-4 w-4" />
@@ -213,9 +222,9 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
                 <p className="text-sm text-gray-600">
                   Nature photography collection.
                 </p>
-                {file?.uploadMode === 'secure' && (
+                {!isUnlocked && (
                   <p className="text-xs text-gray-500">
-                    🔒 Click "View" to unlock this secure image
+                    🔒 Click "View" to unlock this image
                   </p>
                 )}
               </div>
