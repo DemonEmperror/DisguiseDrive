@@ -37,16 +37,19 @@ export default function Folders() {
   const [showNewFolderPassword, setShowNewFolderPassword] = useState(false);
 
   useEffect(() => {
+    console.log('Auth state:', { loading, isAuthenticated, user });
     if (!loading && !isAuthenticated) {
-      window.location.href = '/login';
+      console.log('Redirecting to home - not authenticated');
+      window.location.href = '/';
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, user]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
+      console.log('Loading folders for authenticated user');
       loadFolders();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const loadFolders = async () => {
     try {
