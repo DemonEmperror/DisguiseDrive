@@ -37,12 +37,15 @@ const authenticateSupabaseToken = async (req, res, next) => {
     }
 
     // Verify token with Supabase
+    console.log('Verifying Supabase token...');
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
       console.error('Supabase auth error:', error);
       return res.status(401).json({ error: 'Invalid token' });
     }
+    
+    console.log('Supabase user verified:', user.email);
 
     // Create or find user in our database
     let dbUser = await prisma.user.findUnique({

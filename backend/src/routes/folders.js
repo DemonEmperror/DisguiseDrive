@@ -30,6 +30,8 @@ const unlockFolderSchema = Joi.object({
  * List user's folders
  */
 router.get('/', authenticateSupabaseToken, asyncHandler(async (req, res) => {
+  console.log('GET /api/folders - User:', req.user?.id, req.user?.email);
+  
   const folders = await prisma.folder.findMany({
     where: {
       ownerId: req.user.id
