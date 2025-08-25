@@ -8,7 +8,7 @@ const authRoutes = require('./routes/auth');
 const folderRoutes = require('./routes/folders');
 const fileRoutes = require('./routes/files');
 const supabaseStorage = require('./services/supabaseStorage');
-const errorHandler = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/errorHandler');
 const SupabaseStorageService = require('./services/supabaseStorage');
 
 const app = express();
