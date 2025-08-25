@@ -7,7 +7,6 @@ const { PrismaClient } = require('@prisma/client');
 const authRoutes = require('./routes/auth');
 const folderRoutes = require('./routes/folders');
 const fileRoutes = require('./routes/files');
-const supabaseStorage = require('./services/supabaseStorage');
 const { errorHandler } = require('./middleware/errorHandler');
 const SupabaseStorageService = require('./services/supabaseStorage');
 
@@ -80,6 +79,8 @@ app.use('*', (req, res) => {
 app.use(errorHandler);
 
 // Initialize storage and start server
+const supabaseStorage = new SupabaseStorageService();
+
 async function startServer() {
   try {
     // Initialize Supabase storage
