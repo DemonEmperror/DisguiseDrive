@@ -19,6 +19,18 @@ import toast from 'react-hot-toast';
 
 export default function Folders() {
   const { user, isAuthenticated, loading } = useSupabaseAuth();
+  
+  // Show loading screen while authentication is being determined
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   const [folders, setFolders] = useState([]);
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [folderFiles, setFolderFiles] = useState([]);
@@ -38,9 +50,12 @@ export default function Folders() {
 
   useEffect(() => {
     console.log('Auth state:', { loading, isAuthenticated, user });
-    if (!loading && !isAuthenticated) {
+    // Only redirect if we're sure the user is not authenticated (loading is false)
+    if (!loading && !isAuthenticated && !user) {
       console.log('Redirecting to home - not authenticated');
-      window.location.href = '/';
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100); // Small delay to prevent race conditions
     }
   }, [isAuthenticated, loading, user]);
 
