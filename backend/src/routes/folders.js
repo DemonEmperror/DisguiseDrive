@@ -2,7 +2,8 @@ const express = require('express');
 const Joi = require('joi');
 const argon2 = require('argon2');
 const { PrismaClient } = require('@prisma/client');
-const { authenticateToken, verifyFolderAccess } = require('../middleware/auth');
+const { authenticateSupabaseToken } = require('../middleware/supabaseAuth');
+const { verifyFolderAccess } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const cryptoService = require('../services/crypto');
 
@@ -28,7 +29,7 @@ const unlockFolderSchema = Joi.object({
  * GET /api/folders
  * List user's folders
  */
-router.get('/', authenticateToken, asyncHandler(async (req, res) => {
+router.get('/', authenticateSupabaseToken, asyncHandler(async (req, res) => {
   const folders = await prisma.folder.findMany({
     where: {
       ownerId: req.user.id
@@ -60,7 +61,7 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
  * POST /api/folders
  * Create a new folder
  */
-router.post('/', authenticateToken, asyncHandler(async (req, res) => {
+router.post('/', authenticateSupabaseToken, asyncHandler(async (req, res) => {
   // Validate input
   const { error, value } = createFolderSchema.validate(req.body);
   if (error) {
@@ -121,7 +122,7 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
  * POST /api/folders/:id/lock
  * Set password protection on a folder
  */
-router.post('/:id/lock', authenticateToken, asyncHandler(async (req, res) => {
+router.post('/:id/lock', authenticateSupabaseToken, asyncHandler(async (req, res) => {
   // Validate input
   const { error, value } = lockFolderSchema.validate(req.body);
   if (error) {
@@ -188,7 +189,7 @@ router.post('/:id/lock', authenticateToken, asyncHandler(async (req, res) => {
  * POST /api/folders/:id/unlock
  * Unlock a password-protected folder
  */
-router.post('/:id/unlock', authenticateToken, asyncHandler(async (req, res) => {
+router.post('/:id/unlock', authenticateSupabaseToken, asyncHandler(async (req, res) => {
   // Validate input
   const { error, value } = unlockFolderSchema.validate(req.body);
   if (error) {
@@ -292,7 +293,7 @@ router.post('/:id/unlock', authenticateToken, asyncHandler(async (req, res) => {
  * GET /api/folders/:id
  * Get folder details and files (requires folder access if protected)
  */
-router.get('/:id', authenticateToken, verifyFolderAccess, asyncHandler(async (req, res) => {
+router.get('/:id', authenticateSupabaseToken, verifyFolderAccess, asyncHandler(async (req, res) => {
   const folderId = req.params.id;
 
   // Get folder with files
@@ -335,7 +336,7 @@ router.get('/:id', authenticateToken, verifyFolderAccess, asyncHandler(async (re
  * DELETE /api/folders/:id
  * Delete a folder and all its files
  */
-router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
+router.delete('/:id', authenticateSupabaseToken, asyncHandler(async (req, res) => {
   const folderId = req.params.id;
 
   // Check if folder exists and is owned by user

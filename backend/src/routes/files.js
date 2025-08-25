@@ -2,7 +2,8 @@ const express = require('express');
 const multer = require('multer');
 const Joi = require('joi');
 const { PrismaClient } = require('@prisma/client');
-const { authenticateToken, verifyFolderAccess } = require('../middleware/auth');
+const { authenticateSupabaseToken } = require('../middleware/supabaseAuth');
+const { verifyFolderAccess } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const cryptoService = require('../services/crypto');
 const SupabaseStorageService = require('../services/supabaseStorage');
@@ -42,7 +43,7 @@ const normalUploadSchema = Joi.object({
  * Upload files to a folder
  */
 router.post('/:folderId/files', 
-  authenticateToken,
+  authenticateSupabaseToken,
   verifyFolderAccess,
   upload.array('files', 10),
   asyncHandler(async (req, res) => {
@@ -209,7 +210,7 @@ router.post('/:folderId/files',
  * GET /api/files/:id/url
  * Get file URL for normal (unencrypted) files
  */
-router.get('/:id/url', authenticateToken, verifyFolderAccess, asyncHandler(async (req, res) => {
+router.get('/:id/url', authenticateSupabaseToken, verifyFolderAccess, asyncHandler(async (req, res) => {
   const fileId = req.params.id;
 
   const file = await prisma.file.findFirst({
@@ -252,7 +253,7 @@ router.get('/:id/url', authenticateToken, verifyFolderAccess, asyncHandler(async
  * GET /api/files/:id/meta
  * Get file metadata
  */
-router.get('/:id/meta', authenticateToken, asyncHandler(async (req, res) => {
+router.get('/:id/meta', authenticateSupabaseToken, asyncHandler(async (req, res) => {
   const fileId = req.params.id;
 
   const file = await prisma.file.findFirst({
@@ -323,7 +324,7 @@ router.get('/:id/cover', asyncHandler(async (req, res) => {
  * GET /api/files/:id/encrypted
  * Get encrypted file blob (requires authentication and folder access)
  */
-router.get('/:id/encrypted', authenticateToken, asyncHandler(async (req, res) => {
+router.get('/:id/encrypted', authenticateSupabaseToken, asyncHandler(async (req, res) => {
   const fileId = req.params.id;
 
   const file = await prisma.file.findFirst({
@@ -393,7 +394,7 @@ router.get('/:id/encrypted', authenticateToken, asyncHandler(async (req, res) =>
  * POST /api/files/:id/decrypt-key
  * Decrypt file key with per-image password
  */
-router.post('/:id/decrypt-key', authenticateToken, asyncHandler(async (req, res) => {
+router.post('/:id/decrypt-key', authenticateSupabaseToken, asyncHandler(async (req, res) => {
   const fileId = req.params.id;
   const { password } = req.body;
 
@@ -515,7 +516,7 @@ router.post('/:id/decrypt-key', authenticateToken, asyncHandler(async (req, res)
  * DELETE /api/files/:id
  * Delete a file
  */
-router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
+router.delete('/:id', authenticateSupabaseToken, asyncHandler(async (req, res) => {
   const fileId = req.params.id;
 
   const file = await prisma.file.findFirst({
