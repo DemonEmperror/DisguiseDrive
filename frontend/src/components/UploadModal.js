@@ -12,6 +12,8 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
   const [showPasswords, setShowPasswords] = useState({});
   const [uploadMode, setUploadMode] = useState('secure'); // 'secure' or 'normal'
   const [coverImageTypes, setCoverImageTypes] = useState({});
+  const [coverImageUrls, setCoverImageUrls] = useState({});
+  const [coverImageModes, setCoverImageModes] = useState({}); // 'style' or 'url'
   
   const coverImageOptions = [
     'grunge', 'cybercore', 'dark academia', 'cottage core', 
@@ -30,12 +32,18 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
     // Initialize passwords and cover types for new files
     const newPasswords = {};
     const newCoverTypes = {};
+    const newCoverUrls = {};
+    const newCoverModes = {};
     newFiles.forEach(({ id }) => {
       newPasswords[id] = '';
       newCoverTypes[id] = 'nature'; // default
+      newCoverUrls[id] = '';
+      newCoverModes[id] = 'style'; // default to style selection
     });
     setPasswords(prev => ({ ...prev, ...newPasswords }));
     setCoverImageTypes(prev => ({ ...prev, ...newCoverTypes }));
+    setCoverImageUrls(prev => ({ ...prev, ...newCoverUrls }));
+    setCoverImageModes(prev => ({ ...prev, ...newCoverModes }));
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -71,6 +79,18 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
       const newCoverTypes = { ...prev };
       delete newCoverTypes[fileId];
       return newCoverTypes;
+    });
+    
+    setCoverImageUrls(prev => {
+      const newCoverUrls = { ...prev };
+      delete newCoverUrls[fileId];
+      return newCoverUrls;
+    });
+    
+    setCoverImageModes(prev => {
+      const newCoverModes = { ...prev };
+      delete newCoverModes[fileId];
+      return newCoverModes;
     });
   };
 
@@ -121,9 +141,13 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
         formData.append('passwords', JSON.stringify(passwordArray));
       }
       
-      // Add cover image types
-      const coverTypesArray = files.map(({ id }) => coverImageTypes[id] || 'nature');
-      formData.append('coverTypes', JSON.stringify(coverTypesArray));
+      // Add cover image data (types and URLs)
+      const coverDataArray = files.map(({ id }) => ({
+        mode: coverImageModes[id] || 'style',
+        type: coverImageTypes[id] || 'nature',
+        url: coverImageUrls[id] || ''
+      }));
+      formData.append('coverData', JSON.stringify(coverDataArray));
       
       // Add upload mode
       formData.append('uploadMode', uploadMode);
@@ -144,6 +168,9 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
       files.forEach(({ preview }) => URL.revokeObjectURL(preview));
       setFiles([]);
       setPasswords({});
+      setCoverImageTypes({});
+      setCoverImageUrls({});
+      setCoverImageModes({});
       onUploadComplete();
       onClose();
       
@@ -162,6 +189,9 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
     files.forEach(({ preview }) => URL.revokeObjectURL(preview));
     setFiles([]);
     setPasswords({});
+    setCoverImageTypes({});
+    setCoverImageUrls({});
+    setCoverImageModes({});
     onClose();
   };
 
@@ -265,25 +295,80 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
                         {(fileData.file.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                       
-                      {/* Cover Image Type Selection */}
-                      <div className="mt-2">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Cover Image Style
+                      {/* Cover Image Selection */}
+                      <div className="mt-2 space-y-2">
+                        <label className="block text-xs font-medium text-gray-700">
+                          Cover Image
                         </label>
-                        <select
-                          value={coverImageTypes[fileData.id] || 'nature'}
-                          onChange={(e) => setCoverImageTypes(prev => ({
-                            ...prev,
-                            [fileData.id]: e.target.value
-                          }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        >
-                          {coverImageOptions.map(option => (
-                            <option key={option} value={option}>
-                              {option.charAt(0).toUpperCase() + option.slice(1)}
-                            </option>
-                          ))}
-                        </select>
+                        
+                        {/* Mode Selection */}
+                        <div className="flex space-x-1 bg-gray-100 rounded p-1">
+                          <button
+                            type="button"
+                            onClick={() => setCoverImageModes(prev => ({
+                              ...prev,
+                              [fileData.id]: 'style'
+                            }))}
+                            className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-colors ${
+                              (coverImageModes[fileData.id] || 'style') === 'style'
+                                ? 'bg-white text-gray-900 shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          >
+                            Style
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCoverImageModes(prev => ({
+                              ...prev,
+                              [fileData.id]: 'url'
+                            }))}
+                            className={`flex-1 px-2 py-1 text-xs font-medium rounded transition-colors ${
+                              coverImageModes[fileData.id] === 'url'
+                                ? 'bg-white text-gray-900 shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          >
+                            URL
+                          </button>
+                        </div>
+
+                        {/* Style Selection */}
+                        {(coverImageModes[fileData.id] || 'style') === 'style' && (
+                          <select
+                            value={coverImageTypes[fileData.id] || 'nature'}
+                            onChange={(e) => setCoverImageTypes(prev => ({
+                              ...prev,
+                              [fileData.id]: e.target.value
+                            }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          >
+                            {coverImageOptions.map(option => (
+                              <option key={option} value={option}>
+                                {option.charAt(0).toUpperCase() + option.slice(1)}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+
+                        {/* URL Input */}
+                        {coverImageModes[fileData.id] === 'url' && (
+                          <div>
+                            <input
+                              type="url"
+                              placeholder="Paste image URL (e.g., from Pinterest, Unsplash)"
+                              value={coverImageUrls[fileData.id] || ''}
+                              onChange={(e) => setCoverImageUrls(prev => ({
+                                ...prev,
+                                [fileData.id]: e.target.value
+                              }))}
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Works with Pinterest, Unsplash, or any direct image URL
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       {/* Password Input (only for secure mode) */}

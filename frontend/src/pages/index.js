@@ -1,16 +1,44 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSupabaseAuth } from '../lib/supabaseAuth';
 import Layout from '../components/Layout';
 import StorageMonitor from '../components/StorageMonitor';
+import AlbumPasswordPrompt from '../components/AlbumPasswordPrompt';
+import { albumAPI } from '../lib/albumAPI';
+import toast from 'react-hot-toast';
 
 export default function Home() {
   const { isAuthenticated, loading } = useSupabaseAuth();
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       window.location.href = '/login';
     }
   }, [isAuthenticated, loading]);
+
+  const handleAlbumAccess = (action) => {
+    setPendingAction(action);
+    setShowPasswordPrompt(true);
+  };
+
+  const handlePasswordSubmit = async (password) => {
+    try {
+      await albumAPI.verifyProfilePassword(password);
+      toast.success('Access granted!');
+      
+      // Execute the pending action
+      if (pendingAction === 'view' || pendingAction === 'create') {
+        window.location.href = '/folders';
+      }
+      
+      setShowPasswordPrompt(false);
+      setPendingAction(null);
+    } catch (error) {
+      toast.error(error.message || 'Invalid password');
+      throw error; // Re-throw to keep the modal open
+    }
+  };
 
   if (loading) {
     return (
@@ -49,9 +77,12 @@ export default function Home() {
                 </div>
               </div>
               <div className="mt-4">
-                <a href="/folders" className="btn-primary w-full text-center">
+                <button 
+                  onClick={() => handleAlbumAccess('view')}
+                  className="btn-primary w-full text-center"
+                >
                   View Albums
-                </a>
+                </button>
               </div>
             </div>
 
@@ -92,9 +123,12 @@ export default function Home() {
                   <p className="text-gray-600 text-sm mb-3">
                     Organize your nature photography into themed albums for easy browsing.
                   </p>
-                  <a href="/folders" className="btn-primary inline-block">
+                  <button 
+                    onClick={() => handleAlbumAccess('create')}
+                    className="btn-primary inline-block"
+                  >
                     Create Album
-                  </a>
+                  </button>
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900 mb-2">2. Upload Photos</h3>
@@ -110,6 +144,17 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Album Password Prompt */}
+      <AlbumPasswordPrompt
+        isOpen={showPasswordPrompt}
+        onClose={() => {
+          setShowPasswordPrompt(false);
+          setPendingAction(null);
+        }}
+        onSubmit={handlePasswordSubmit}
+        title={pendingAction === 'create' ? 'Create Album Access' : 'View Albums Access'}
+      />
     </Layout>
   );
 }

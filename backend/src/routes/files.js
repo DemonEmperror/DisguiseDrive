@@ -54,9 +54,9 @@ router.post('/:folderId/files',
     // Get upload mode
     const uploadMode = req.body.uploadMode || 'secure';
     
-    // Parse passwords and cover types from request body
+    // Parse passwords and cover data from request body
     let passwords = [];
-    let coverTypes = [];
+    let coverData = [];
     
     if (uploadMode === 'secure') {
       try {
@@ -67,9 +67,9 @@ router.post('/:folderId/files',
     }
     
     try {
-      coverTypes = JSON.parse(req.body.coverTypes || '[]');
+      coverData = JSON.parse(req.body.coverData || '[]');
     } catch (error) {
-      return res.status(400).json({ error: 'Invalid cover types format' });
+      return res.status(400).json({ error: 'Invalid cover data format' });
     }
 
     // Validate passwords for secure mode
@@ -96,7 +96,7 @@ router.post('/:folderId/files',
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
       const password = uploadMode === 'secure' ? (passwords[i] || passwords[0]) : null;
-      const coverType = coverTypes[i] || 'nature';
+      const fileCoverData = coverData[i] || { mode: 'style', type: 'nature', url: '' };
 
       try {
         // Skip image validation for non-image files
@@ -150,16 +150,22 @@ router.post('/:folderId/files',
           );
         }
 
-        // Generate cover image using Unsplash with specified type
-        const coverResult = await coverGenerator.generateCover(
-          file.buffer,
-          fileHash,
-          req.user.id,
-          coverType
-        );
+        // Generate cover image based on mode
+        let coverPath;
         
-        // Store the Unsplash URL directly instead of uploading a file
-        const coverPath = coverResult.data;
+        if (fileCoverData.mode === 'url' && fileCoverData.url) {
+          // Use provided URL directly
+          coverPath = fileCoverData.url;
+        } else {
+          // Generate cover using Unsplash with specified type
+          const coverResult = await coverGenerator.generateCover(
+            file.buffer,
+            fileHash,
+            req.user.id,
+            fileCoverData.type || 'nature'
+          );
+          coverPath = coverResult.data;
+        }
 
         // Save file metadata to database  
         console.log('Creating file with uploadMode:', uploadMode);
