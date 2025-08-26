@@ -234,78 +234,68 @@ router.post('/verify', asyncHandler(async (req, res) => {
  * POST /api/auth/verify-password
  * Verify user's profile password for album access
  */
-router.post('/verify-password', asyncHandler(async (req, res) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  // Validate input
-  const { error, value } = verifyPasswordSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ 
-      error: 'Validation failed', 
-      details: error.details[0].message 
-    });
-  }
-
-  const { password } = value;
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId }
-    });
-
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid token - user not found' });
+router.post('/verify-password', 
+  require('../middleware/supabaseAuth').authenticateSupabaseToken,
+  asyncHandler(async (req, res) => {
+    // Validate input
+    const { error, value } = verifyPasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ 
+        error: 'Validation failed', 
+        details: error.details[0].message 
+      });
     }
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      // Log failed attempt
+    const { password } = value;
+
+    try {
+      // Find user by name (Supabase auth provides user info in req.user)
+      const user = await prisma.user.findUnique({
+        where: { name: req.user.name }
+      });
+
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' });
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        // Log failed attempt
+        await prisma.securityLog.create({
+          data: {
+            userId: user.id,
+            action: 'album_access_attempt',
+            success: false,
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent'),
+            metadata: JSON.stringify({ reason: 'invalid_password' })
+          }
+        });
+
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
+      // Log successful verification
       await prisma.securityLog.create({
         data: {
           userId: user.id,
           action: 'album_access_attempt',
-          success: false,
+          success: true,
           ipAddress: req.ip,
-          userAgent: req.get('User-Agent'),
-          metadata: JSON.stringify({ reason: 'invalid_password' })
+          userAgent: req.get('User-Agent')
         }
       });
 
-      return res.status(401).json({ error: 'Invalid password' });
+      res.json({
+        message: 'Password verified successfully',
+        verified: true
+      });
+    } catch (error) {
+      console.error('Password verification error:', error);
+      return res.status(500).json({ error: 'Password verification failed' });
     }
-
-    // Log successful verification
-    await prisma.securityLog.create({
-      data: {
-        userId: user.id,
-        action: 'album_access_attempt',
-        success: true,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
-      }
-    });
-
-    res.json({
-      message: 'Password verified successfully',
-      verified: true
-    });
-  } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Token expired' });
-    }
-    throw error;
-  }
-}));
+  })
+);
 
 module.exports = router;
