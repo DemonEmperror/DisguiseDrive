@@ -11,6 +11,12 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
   const [uploadProgress, setUploadProgress] = useState({});
   const [showPasswords, setShowPasswords] = useState({});
   const [uploadMode, setUploadMode] = useState('secure'); // 'secure' or 'normal'
+  const [coverImageTypes, setCoverImageTypes] = useState({});
+  
+  const coverImageOptions = [
+    'grunge', 'cybercore', 'dark academia', 'cottage core', 
+    'desert steampunk', 'goth', 'victorian', 'medieval', 'nature'
+  ];
 
   const onDrop = useCallback((acceptedFiles) => {
     const newFiles = acceptedFiles.map(file => ({
@@ -21,20 +27,28 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
     
     setFiles(prev => [...prev, ...newFiles]);
     
-    // Initialize passwords for new files
+    // Initialize passwords and cover types for new files
     const newPasswords = {};
+    const newCoverTypes = {};
     newFiles.forEach(({ id }) => {
       newPasswords[id] = '';
+      newCoverTypes[id] = 'nature'; // default
     });
     setPasswords(prev => ({ ...prev, ...newPasswords }));
+    setCoverImageTypes(prev => ({ ...prev, ...newCoverTypes }));
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.gif', '.bmp', '.tiff']
+      'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.gif', '.bmp', '.tiff'],
+      'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm'],
+      'application/pdf': ['.pdf'],
+      'text/*': ['.txt', '.md'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
     },
-    maxSize: 50 * 1024 * 1024, // 50MB
+    maxSize: 100 * 1024 * 1024, // 100MB
     multiple: true
   });
 
@@ -51,6 +65,12 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
       const newPasswords = { ...prev };
       delete newPasswords[fileId];
       return newPasswords;
+    });
+    
+    setCoverImageTypes(prev => {
+      const newCoverTypes = { ...prev };
+      delete newCoverTypes[fileId];
+      return newCoverTypes;
     });
   };
 
@@ -100,6 +120,10 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
         const passwordArray = files.map(({ id }) => passwords[id]);
         formData.append('passwords', JSON.stringify(passwordArray));
       }
+      
+      // Add cover image types
+      const coverTypesArray = files.map(({ id }) => coverImageTypes[id] || 'nature');
+      formData.append('coverTypes', JSON.stringify(coverTypesArray));
       
       // Add upload mode
       formData.append('uploadMode', uploadMode);
@@ -202,10 +226,10 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
             ) : (
               <div>
                 <p className="text-gray-600 font-medium mb-2">
-                  Drag & drop images here, or click to select
+                  Drag & drop files here, or click to select
                 </p>
                 <p className="text-sm text-gray-500">
-                  Supports JPEG, PNG, WebP, GIF (max 50MB each)
+                  Supports Images, Videos, PDFs, Documents (max 100MB each)
                 </p>
               </div>
             )}
@@ -220,11 +244,17 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
                 {files.map((fileData) => (
                   <div key={fileData.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
                     {/* Preview */}
-                    <img
-                      src={fileData.preview}
-                      alt={fileData.file.name}
-                      className="w-16 h-16 object-cover rounded-md"
-                    />
+                    {fileData.file.type.startsWith('image/') ? (
+                      <img
+                        src={fileData.preview}
+                        alt={fileData.file.name}
+                        className="w-16 h-16 object-cover rounded-md"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center">
+                        <PhotoIcon className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
                     
                     {/* File Info */}
                     <div className="flex-1 min-w-0">
@@ -235,12 +265,33 @@ const UploadModal = ({ isOpen, onClose, folderId, folderToken, onUploadComplete 
                         {(fileData.file.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                       
+                      {/* Cover Image Type Selection */}
+                      <div className="mt-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Cover Image Style
+                        </label>
+                        <select
+                          value={coverImageTypes[fileData.id] || 'nature'}
+                          onChange={(e) => setCoverImageTypes(prev => ({
+                            ...prev,
+                            [fileData.id]: e.target.value
+                          }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        >
+                          {coverImageOptions.map(option => (
+                            <option key={option} value={option}>
+                              {option.charAt(0).toUpperCase() + option.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
                       {/* Password Input (only for secure mode) */}
                       {uploadMode === 'secure' && (
                         <div className="relative mt-2">
                           <input
                             type={showPasswords[fileData.id] ? "text" : "password"}
-                            placeholder="Image password"
+                            placeholder="File password"
                             value={passwords[fileData.id] || ''}
                             onChange={(e) => updatePassword(fileData.id, e.target.value)}
                             className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"

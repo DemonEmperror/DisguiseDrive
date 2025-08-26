@@ -68,6 +68,65 @@ class UnsplashService {
   }
 
   /**
+   * Get random image by aesthetic type
+   * @param {string} type - Aesthetic type (grunge, cybercore, etc.)
+   * @returns {Promise<string>} Image URL
+   */
+  async getRandomImageByType(type = 'nature') {
+    const aestheticQueries = {
+      'grunge': 'grunge,vintage,distressed,worn,texture,industrial',
+      'cybercore': 'cyberpunk,neon,futuristic,digital,technology,cyber',
+      'dark academia': 'dark academia,library,books,vintage,gothic,scholarly',
+      'cottage core': 'cottagecore,rural,countryside,flowers,vintage,cozy',
+      'desert steampunk': 'steampunk,desert,mechanical,brass,vintage,industrial',
+      'goth': 'gothic,dark,black,mysterious,architecture,dramatic',
+      'victorian': 'victorian,vintage,ornate,elegant,classical,antique',
+      'medieval': 'medieval,castle,ancient,stone,historical,fortress',
+      'nature': 'nature,landscape,forest,mountains,ocean,trees'
+    };
+
+    const query = aestheticQueries[type.toLowerCase()] || aestheticQueries['nature'];
+
+    try {
+      const cacheKey = `${type}_images`;
+      const cached = this.cache.get(cacheKey);
+      
+      if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
+        const randomIndex = Math.floor(Math.random() * cached.images.length);
+        return cached.images[randomIndex];
+      }
+
+      const response = await axios.get(`${this.baseURL}/photos/random`, {
+        params: {
+          query: query,
+          count: 20,
+          orientation: 'landscape',
+          w: 400,
+          h: 300
+        },
+        headers: {
+          'Authorization': `Client-ID ${this.accessKey}`
+        },
+        timeout: 10000
+      });
+
+      const images = response.data.map(img => img.urls.small);
+      
+      this.cache.set(cacheKey, {
+        images: images,
+        timestamp: Date.now()
+      });
+
+      const randomIndex = Math.floor(Math.random() * images.length);
+      return images[randomIndex];
+
+    } catch (error) {
+      console.error(`Failed to fetch ${type} image:`, error.message);
+      return this.getRandomNatureImage(); // Fallback to nature
+    }
+  }
+
+  /**
    * Get multiple random nature images
    * @param {number} count - Number of images to fetch
    * @returns {Promise<string[]>} Array of image URLs

@@ -54,16 +54,26 @@ router.post('/:folderId/files',
     // Get upload mode
     const uploadMode = req.body.uploadMode || 'secure';
     
-    // Parse passwords from request body (only for secure mode)
+    // Parse passwords and cover types from request body
     let passwords = [];
+    let coverTypes = [];
+    
     if (uploadMode === 'secure') {
       try {
         passwords = JSON.parse(req.body.passwords || '[]');
       } catch (error) {
         return res.status(400).json({ error: 'Invalid passwords format' });
       }
+    }
+    
+    try {
+      coverTypes = JSON.parse(req.body.coverTypes || '[]');
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid cover types format' });
+    }
 
-      // Validate passwords for secure mode
+    // Validate passwords for secure mode
+    if (uploadMode === 'secure') {
       const { error } = secureUploadSchema.validate({ passwords });
       if (error) {
         return res.status(400).json({ 
@@ -86,16 +96,20 @@ router.post('/:folderId/files',
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
       const password = uploadMode === 'secure' ? (passwords[i] || passwords[0]) : null;
+      const coverType = coverTypes[i] || 'nature';
 
       try {
-        // Validate image
-        const isValidImage = await coverGenerator.validateImage(file.buffer);
-        if (!isValidImage) {
-          errors.push({
-            filename: file.originalname,
-            error: 'Invalid image format'
-          });
-          continue;
+        // Skip image validation for non-image files
+        const isImage = file.mimetype.startsWith('image/');
+        if (isImage) {
+          const isValidImage = await coverGenerator.validateImage(file.buffer);
+          if (!isValidImage) {
+            errors.push({
+              filename: file.originalname,
+              error: 'Invalid image format'
+            });
+            continue;
+          }
         }
 
         // Calculate file hash
@@ -136,11 +150,12 @@ router.post('/:folderId/files',
           );
         }
 
-        // Generate cover image using Unsplash (for both secure and normal uploads)
+        // Generate cover image using Unsplash with specified type
         const coverResult = await coverGenerator.generateCover(
           file.buffer,
           fileHash,
-          req.user.id
+          req.user.id,
+          coverType
         );
         
         // Store the Unsplash URL directly instead of uploading a file

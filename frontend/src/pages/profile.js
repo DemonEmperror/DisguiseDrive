@@ -10,6 +10,7 @@ export default function Profile() {
   const [profileImage, setProfileImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [storageUsage, setStorageUsage] = useState({ used: 0, total: 1073741824 }); // 1GB in bytes
   const [passwords, setPasswords] = useState({
     current: '',
     new: '',
@@ -43,10 +44,35 @@ export default function Profile() {
       } else if (profile?.avatar_url) {
         setProfileImage(profile.avatar_url);
       }
+
+      // Get storage usage
+      await loadStorageUsage();
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStorageUsage = async () => {
+    try {
+      // Get all buckets and calculate usage
+      const { data: buckets } = await supabase.storage.listBuckets();
+      let totalUsed = 0;
+
+      for (const bucket of buckets || []) {
+        const { data: files } = await supabase.storage
+          .from(bucket.name)
+          .list('', { limit: 1000, sortBy: { column: 'name', order: 'asc' } });
+        
+        if (files) {
+          totalUsed += files.reduce((sum, file) => sum + (file.metadata?.size || 0), 0);
+        }
+      }
+
+      setStorageUsage(prev => ({ ...prev, used: totalUsed }));
+    } catch (error) {
+      console.error('Error loading storage usage:', error);
     }
   };
 
@@ -62,6 +88,20 @@ export default function Profile() {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Math.random()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
+
+      // Create avatars bucket if it doesn't exist
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const avatarsBucket = buckets?.find(bucket => bucket.name === 'avatars');
+      
+      if (!avatarsBucket) {
+        const { error: bucketError } = await supabase.storage.createBucket('avatars', {
+          public: true,
+          allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
+        });
+        if (bucketError) {
+          console.error('Error creating avatars bucket:', bucketError);
+        }
+      }
 
       // Upload image to Supabase storage
       const { error: uploadError } = await supabase.storage
@@ -238,6 +278,34 @@ export default function Profile() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Storage Usage Section */}
+          <div className="px-6 py-6 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Storage Usage</h2>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <span>Used Storage</span>
+                  <span>{(storageUsage.used / 1024 / 1024).toFixed(2)} MB / {(storageUsage.total / 1024 / 1024 / 1024).toFixed(1)} GB</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${Math.min((storageUsage.used / storageUsage.total) * 100, 100)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {((1 - storageUsage.used / storageUsage.total) * 100).toFixed(1)}% available
+                </p>
+              </div>
+              <button
+                onClick={loadStorageUsage}
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Refresh Usage
+              </button>
             </div>
           </div>
 

@@ -6,13 +6,13 @@ class CoverGenerator {
   }
 
   /**
-   * Generate cover using random Unsplash nature image
+   * Generate cover using random Unsplash image based on aesthetic type
    * No longer processes the original image for discretion
    */
-  async generateCover(imageBuffer, fileHash, ownerId) {
+  async generateCover(imageBuffer, fileHash, ownerId, coverType = 'nature') {
     try {
-      // Get random nature image URL from Unsplash
-      const coverImageUrl = await unsplashService.getRandomNatureImage();
+      // Get random image URL from Unsplash based on cover type
+      const coverImageUrl = await unsplashService.getRandomImageByType(coverType);
       
       // Return the Unsplash URL directly - no local processing needed
       return {
