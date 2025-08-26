@@ -45,6 +45,7 @@ export const authAPI = {
   register: (userData) => api.post('/auth/register', userData),
   login: (credentials) => api.post('/auth/login', credentials),
   verify: () => api.post('/auth/verify'),
+  verifyPassword: (password) => api.post('/auth/verify-password', { password }),
 };
 
 // Folders API

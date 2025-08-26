@@ -3,7 +3,7 @@ import { useSupabaseAuth } from '../lib/supabaseAuth';
 import Layout from '../components/Layout';
 import StorageMonitor from '../components/StorageMonitor';
 import AlbumPasswordPrompt from '../components/AlbumPasswordPrompt';
-import { albumAPI } from '../lib/albumAPI';
+import { authAPI } from '../lib/api';
 import toast from 'react-hot-toast';
 
 export default function Home() {
@@ -24,7 +24,7 @@ export default function Home() {
 
   const handlePasswordSubmit = async (password) => {
     try {
-      await albumAPI.verifyProfilePassword(password);
+      await authAPI.verifyPassword(password);
       toast.success('Access granted!');
       
       // Execute the pending action
@@ -35,7 +35,7 @@ export default function Home() {
       setShowPasswordPrompt(false);
       setPendingAction(null);
     } catch (error) {
-      toast.error(error.message || 'Invalid password');
+      toast.error(error.response?.data?.error || 'Invalid password');
       throw error; // Re-throw to keep the modal open
     }
   };
