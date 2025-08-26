@@ -17,6 +17,7 @@ const Layout = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
     { name: 'Folders', href: '/folders', icon: FolderIcon },
+    { name: 'Profile', href: '/profile', icon: UserIcon },
   ];
 
   const handleLogout = async () => {
@@ -63,13 +64,17 @@ const Layout = ({ children }) => {
           </nav>
           
           <div className="border-t border-gray-200 p-4">
-            <div className="flex items-center mb-3">
+            <a
+              href="/profile"
+              className="flex items-center mb-3 p-2 rounded-md hover:bg-gray-100 transition-colors"
+              onClick={() => setSidebarOpen(false)}
+            >
               <UserIcon className="h-8 w-8 text-gray-400 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-900">{user?.username}</p>
-                <p className="text-xs text-gray-500">{user?.email}</p>
+                <p className="text-sm font-medium text-gray-900">{user?.username || user?.email}</p>
+                <p className="text-xs text-gray-500">View Profile</p>
               </div>
-            </div>
+            </a>
             <button
               onClick={handleLogout}
               className="flex items-center w-full px-3 py-2 text-sm text-red-600 rounded-md hover:bg-red-50"
@@ -102,13 +107,16 @@ const Layout = ({ children }) => {
           </nav>
           
           <div className="border-t border-gray-200 p-4">
-            <div className="flex items-center mb-3">
+            <a
+              href="/profile"
+              className="flex items-center mb-3 p-2 rounded-md hover:bg-gray-100 transition-colors"
+            >
               <UserIcon className="h-8 w-8 text-gray-400 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-900">{user?.username}</p>
-                <p className="text-xs text-gray-500">{user?.email}</p>
+                <p className="text-sm font-medium text-gray-900">{user?.username || user?.email}</p>
+                <p className="text-xs text-gray-500">View Profile</p>
               </div>
-            </div>
+            </a>
             <button
               onClick={handleLogout}
               className="flex items-center w-full px-3 py-2 text-sm text-red-600 rounded-md hover:bg-red-50"

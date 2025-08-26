@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { XMarkIcon, LockClosedIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, LockClosedIcon, TrashIcon, EyeIcon, EyeSlashIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useBottomTap } from '../hooks/useTripleTap';
 import { filesAPI } from '../lib/api';
 import cryptoService from '../lib/crypto';
 import toast from 'react-hot-toast';
 
-const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => {
+const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete, files, currentIndex, onNavigate }) => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
@@ -174,20 +174,49 @@ const ImageViewer = ({ file, isOpen, onClose, folderToken, user, onDelete }) => 
       onClick={handleBackdropClick}
     >
       <div className="modal-content max-w-4xl">
-        {/* Header */}
+        {/* Header with Navigation */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">{file.originalName}</h3>
-            <p className="text-sm text-gray-500">
-              {(file.size / 1024 / 1024).toFixed(2)} MB • {new Date(file.createdAt).toLocaleDateString()}
-            </p>
+          <div className="flex items-center space-x-4">
+            {/* Previous Button */}
+            {files && currentIndex > 0 && (
+              <button
+                onClick={() => onNavigate(currentIndex - 1)}
+                className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                title="Previous image"
+              >
+                <ChevronLeftIcon className="h-5 w-5" />
+              </button>
+            )}
+            
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">{file.originalName}</h3>
+              <p className="text-sm text-gray-500">
+                {(file.size / 1024 / 1024).toFixed(2)} MB • {new Date(file.createdAt).toLocaleDateString()}
+                {files && ` • ${currentIndex + 1} of ${files.length}`}
+              </p>
+            </div>
           </div>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-md text-gray-400 hover:text-gray-500"
-          >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
+
+          <div className="flex items-center space-x-2">
+            {/* Next Button */}
+            {files && currentIndex < files.length - 1 && (
+              <button
+                onClick={() => onNavigate(currentIndex + 1)}
+                className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                title="Next image"
+              >
+                <ChevronRightIcon className="h-5 w-5" />
+              </button>
+            )}
+            
+            {/* Close Button */}
+            <button
+              onClick={handleClose}
+              className="p-2 rounded-md text-gray-400 hover:text-gray-500"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

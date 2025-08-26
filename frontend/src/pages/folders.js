@@ -195,6 +195,17 @@ export default function Folders() {
     setShowImageViewer(true);
   };
 
+  const handleImageNavigation = (newIndex) => {
+    if (files && files[newIndex]) {
+      setSelectedFile(files[newIndex]);
+    }
+  };
+
+  const getCurrentImageIndex = () => {
+    if (!selectedFile || !files) return -1;
+    return files.findIndex(f => f.id === selectedFile.id);
+  };
+
   const handleImageDelete = (fileId) => {
     // Remove deleted file from the current folder view
     setFolderFiles(prev => prev.filter(file => file.id !== fileId));
@@ -554,6 +565,9 @@ export default function Folders() {
         folderToken={folderToken}
         user={user}
         onDelete={handleImageDelete}
+        files={files}
+        currentIndex={getCurrentImageIndex()}
+        onNavigate={handleImageNavigation}
       />
     </Layout>
   );
