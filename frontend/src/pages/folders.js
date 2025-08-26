@@ -196,14 +196,14 @@ export default function Folders() {
   };
 
   const handleImageNavigation = (newIndex) => {
-    if (files && files[newIndex]) {
-      setSelectedFile(files[newIndex]);
+    if (folderFiles && folderFiles[newIndex]) {
+      setSelectedFile(folderFiles[newIndex]);
     }
   };
 
   const getCurrentImageIndex = () => {
-    if (!selectedFile || !files) return -1;
-    return files.findIndex(f => f.id === selectedFile.id);
+    if (!selectedFile || !folderFiles) return -1;
+    return folderFiles.findIndex(f => f.id === selectedFile.id);
   };
 
   const handleImageDelete = (fileId) => {
@@ -565,7 +565,7 @@ export default function Folders() {
         folderToken={folderToken}
         user={user}
         onDelete={handleImageDelete}
-        files={files}
+        files={folderFiles}
         currentIndex={getCurrentImageIndex()}
         onNavigate={handleImageNavigation}
       />
